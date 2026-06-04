@@ -25,18 +25,18 @@ are deliberate:
 
 ```hcl
 module "namespace" {
-  source = "github.com/<your-org>/terraform-k8s-modules//components/k8s/namespace?ref=v0.1.0"
+  source = "github.com/automazeio/terraform-modules//k8s/namespace?ref=v1.0.0"
 
   name = "app"
 }
 
 module "app" {
-  source = "github.com/<your-org>/terraform-k8s-modules//components/k8s/single_deployment?ref=v0.1.0"
+  source = "github.com/automazeio/terraform-modules//k8s/single_deployment?ref=v1.0.0"
 
   name      = "api"
   namespace = module.namespace.name
-  image     = "ghcr.io/<your-org>/api:latest"
-  # ... see components/k8s/single_deployment/variables.tf for the full input list
+  image     = "ghcr.io/your-org/api:latest"
+  # ... see k8s/single_deployment/variables.tf for the full input list
 }
 ```
 
@@ -50,59 +50,59 @@ module "app" {
 
 | Module | Purpose |
 |--------|---------|
-| `components/k3s-cluster` | Hetzner Cloud k3s cluster (wraps [`kube-hetzner`](https://github.com/kube-hetzner/terraform-hcloud-kube-hetzner)); includes a Packer template for openSUSE MicroOS snapshots |
-| `components/digital_ocean/k8s_cluster` | DigitalOcean managed Kubernetes cluster |
-| `components/cloudflare` | Cloudflare DNS records for a managed zone |
-| `components/ssh-keys` | TLS keypairs (e.g. master/worker SSH keys for Hetzner) |
-| `components/github` | GitHub Actions integration — manage secrets and generate a build/push/deploy workflow |
+| `hetzner` | Hetzner Cloud k3s cluster (wraps [`kube-hetzner`](https://github.com/kube-hetzner/terraform-hcloud-kube-hetzner)); includes a Packer template for openSUSE MicroOS snapshots |
+| `digital_ocean/k8s_cluster` | DigitalOcean managed Kubernetes cluster |
+| `cloudflare` | Cloudflare DNS records for a managed zone |
+| `ssh-keys` | TLS keypairs (e.g. master/worker SSH keys for Hetzner) |
+| `github` | GitHub Actions integration — manage secrets and generate a build/push/deploy workflow |
 
 ### Kubernetes — platform
 
 | Module | Purpose |
 |--------|---------|
-| `components/k8s/namespace` | Namespace |
-| `components/k8s/cert_manager` | cert-manager installation |
-| `components/k8s/letsencrypt` | Let's Encrypt `ClusterIssuer` (DNS-01 challenge) |
-| `components/k8s/traefik` | Traefik ingress controller |
-| `components/k8s/gateway` | Traefik `IngressRouteTCP` + cert-manager `Certificate` for non-HTTP (TCP) services |
-| `components/k8s/metrics-server` | Kubernetes Metrics Server |
-| `components/k8s/descheduler` | Descheduler for rebalancing pods |
-| `components/k8s/ecr` | AWS ECR pull credentials + a CronJob that refreshes the registry token |
-| `components/k8s/harbor` | Self-hosted Harbor registry — `init`, `setup`, and `service_account` submodules |
+| `k8s/namespace` | Namespace |
+| `k8s/cert_manager` | cert-manager installation |
+| `k8s/letsencrypt` | Let's Encrypt `ClusterIssuer` (DNS-01 challenge) |
+| `k8s/traefik` | Traefik ingress controller |
+| `k8s/gateway` | Traefik `IngressRouteTCP` + cert-manager `Certificate` for non-HTTP (TCP) services |
+| `k8s/metrics-server` | Kubernetes Metrics Server |
+| `k8s/descheduler` | Descheduler for rebalancing pods |
+| `k8s/ecr` | AWS ECR pull credentials + a CronJob that refreshes the registry token |
+| `k8s/harbor` | Self-hosted Harbor registry — `init`, `setup`, and `service_account` submodules |
 
 ### Kubernetes — observability
 
 | Module | Purpose |
 |--------|---------|
-| `components/k8s/kube-prometheus-stack` | Prometheus + Alertmanager + Grafana stack |
-| `components/k8s/kube-state-metrics` | Standalone kube-state-metrics |
-| `components/k8s/grafana/dashboard` | Grafana instance |
-| `components/k8s/grafana/loki` | Loki log aggregation |
-| `components/k8s/grafana/alloy` | Grafana Alloy agent (logs + metrics collection, remote-write) |
+| `k8s/kube-prometheus-stack` | Prometheus + Alertmanager + Grafana stack |
+| `k8s/kube-state-metrics` | Standalone kube-state-metrics |
+| `k8s/grafana/dashboard` | Grafana instance |
+| `k8s/grafana/loki` | Loki log aggregation |
+| `k8s/grafana/alloy` | Grafana Alloy agent (logs + metrics collection, remote-write) |
 
 ### Kubernetes — data
 
 | Module | Purpose |
 |--------|---------|
-| `components/k8s/postgresql` | PostgreSQL (Helm) |
-| `components/k8s/mongodb` | MongoDB (Helm), optionally exposed over TCP via `gateway` |
-| `components/k8s/redis` | Redis |
-| `components/k8s/databasus` | [Databasus](https://github.com/databasus/databasus) database backup tool (PostgreSQL/MySQL/MongoDB) |
+| `k8s/postgresql` | PostgreSQL (Helm) |
+| `k8s/mongodb` | MongoDB (Helm), optionally exposed over TCP via `gateway` |
+| `k8s/redis` | Redis |
+| `k8s/databasus` | [Databasus](https://github.com/databasus/databasus) database backup tool (PostgreSQL/MySQL/MongoDB) |
 
 ### Kubernetes — applications
 
 | Module | Purpose |
 |--------|---------|
-| `components/k8s/single_deployment` | Generic application: Deployment + Service + Ingress + HPA + PDB + ConfigMap/Secret |
-| `components/k8s/single_deployment/ingress` | Standalone ingress submodule (reused by other modules) |
-| `components/k8s/arc_runner` | GitHub Actions Runner Controller (self-hosted runners) |
+| `k8s/single_deployment` | Generic application: Deployment + Service + Ingress + HPA + PDB + ConfigMap/Secret |
+| `k8s/single_deployment/ingress` | Standalone ingress submodule (reused by other modules) |
+| `k8s/arc_runner` | GitHub Actions Runner Controller (self-hosted runners) |
 
 ## Development
 
 ```bash
 tofu fmt -recursive    # format
 # validate an individual module:
-cd components/k8s/namespace && tofu init -backend=false && tofu validate
+cd k8s/namespace && tofu init -backend=false && tofu validate
 ```
 
 A secret scan (e.g. [`gitleaks`](https://github.com/gitleaks/gitleaks)) is
