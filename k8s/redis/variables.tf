@@ -22,3 +22,8 @@ variable "max_memory" {
   type        = number
   default     = 800
 }
+
+variable "auth_enabled" {
+  type    = bool
+  default = false
+}

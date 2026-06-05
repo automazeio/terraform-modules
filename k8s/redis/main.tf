@@ -37,7 +37,7 @@ resource "helm_release" "redis" {
     },
     {
       name  = "auth.enabled"
-      value = "true"
+      value = tostring(var.auth_enabled)
     },
     {
       name  = "auth.password"
