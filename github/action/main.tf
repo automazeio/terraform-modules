@@ -13,7 +13,7 @@ locals {
     registry_password_secret_name = var.registry_password_secret_name
     dockerfile_path               = var.dockerfile_path
     context                       = var.context
-    deployment_name               = var.deployment_name
+    deployment_names              = var.deployment_names
     namespace                     = var.namespace
     kubeconfig_secret_name        = var.kubeconfig_secret_name
     kubeconfig_env_var_name       = var.kubeconfig_env_var_name

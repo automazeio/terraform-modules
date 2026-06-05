@@ -40,10 +40,9 @@ variable "build_args_literals" {
   default     = {}
 }
 
-variable "deployment_name" {
-  description = "Kubernetes deployment name to update on deploy"
-  type        = string
-  default     = "api"
+variable "deployment_names" {
+  description = "Kubernetes deployment name(s) to update on deploy. Accepts a single string or list of strings."
+  type        = list(string)
 }
 
 variable "namespace" {
