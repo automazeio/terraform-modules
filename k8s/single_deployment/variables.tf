@@ -77,11 +77,12 @@ variable "health_check_path" {
 }
 
 variable "startup_probe" {
-  description = "The startup probe for the container."
+  description = "The startup probe for the container; gates the whole boot and uses the deep `health_check_path`. `timeout_seconds` defaults to 1 (the Kubernetes default) — raise it for heavy apps whose health endpoint can take >1s under load, otherwise a slow-but-healthy boot is killed as a false startup failure."
   type = object({
     initial_delay_seconds = number
     period_seconds        = number
     failure_threshold     = number
+    timeout_seconds       = optional(number, 1)
   })
   nullable = true
 }
@@ -109,6 +110,20 @@ variable "liveness_probe" {
   })
   default  = null
   nullable = true
+}
+
+variable "pre_stop_sleep_seconds" {
+  description = "If set, adds a container preStop hook that sleeps this many seconds before the container receives SIGTERM. Bridges the window between the pod leaving the Service endpoints and the process stopping, so the proxy (Traefik) finishes draining in-flight requests instead of returning 502 during scale-down/rollout. Must be less than termination_grace_period_seconds. Null disables the hook."
+  type        = number
+  default     = null
+  nullable    = true
+}
+
+variable "termination_grace_period_seconds" {
+  description = "Pod terminationGracePeriodSeconds. Must exceed pre_stop_sleep_seconds plus the app's in-flight drain time, or the kubelet SIGKILLs the pod mid-drain. Null leaves the Kubernetes default (30)."
+  type        = number
+  default     = null
+  nullable    = true
 }
 
 variable "service_account_name" {

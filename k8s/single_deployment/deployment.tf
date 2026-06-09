@@ -27,6 +27,8 @@ resource "kubernetes_deployment_v1" "deployment" {
       }
 
       spec {
+        termination_grace_period_seconds = var.termination_grace_period_seconds
+
         container {
           image             = var.container_image
           name              = var.name
@@ -73,6 +75,7 @@ resource "kubernetes_deployment_v1" "deployment" {
               initial_delay_seconds = var.startup_probe.initial_delay_seconds
               period_seconds        = var.startup_probe.period_seconds
               failure_threshold     = var.startup_probe.failure_threshold
+              timeout_seconds       = var.startup_probe.timeout_seconds
             }
           }
 
@@ -100,6 +103,17 @@ resource "kubernetes_deployment_v1" "deployment" {
               period_seconds        = var.liveness_probe.period_seconds
               timeout_seconds       = var.liveness_probe.timeout_seconds
               failure_threshold     = var.liveness_probe.failure_threshold
+            }
+          }
+
+          dynamic "lifecycle" {
+            for_each = var.pre_stop_sleep_seconds != null ? [1] : []
+            content {
+              pre_stop {
+                exec {
+                  command = ["sh", "-c", "sleep ${var.pre_stop_sleep_seconds}"]
+                }
+              }
             }
           }
 
