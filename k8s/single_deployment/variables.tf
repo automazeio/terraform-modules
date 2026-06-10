@@ -62,12 +62,32 @@ variable "container_port" {
 }
 
 variable "max_resources" {
-  description = "The maximum resources for the container."
+  description = "The maximum resources for the container (the container LIMITS). The REQUESTS are derived as request_to_limit_ratio * these values."
   type = object({
     cpu    = number
     memory = number
   })
   nullable = true
+}
+
+variable "cpu_request_ratio" {
+  description = "Fraction of the CPU LIMIT (max_resources.cpu) used as the CPU REQUEST. Default 0.5 (request = half the limit = 2x burst headroom). The CPU request is the HPA's denominator and the scheduling/shares reservation: raise it to lift the scale-up threshold (request x cpu utilization target) above your real peak, but keep it < 1 so the container keeps burst headroom before CFS throttling."
+  type        = number
+  default     = 0.5
+  validation {
+    condition     = var.cpu_request_ratio > 0 && var.cpu_request_ratio <= 1
+    error_message = "cpu_request_ratio must be in (0, 1]."
+  }
+}
+
+variable "memory_request_ratio" {
+  description = "Fraction of the memory LIMIT (max_resources.memory) used as the memory REQUEST. Default 0.5. Memory is non-compressible (exceeding the LIMIT is an OOMKill, not throttling), so size the request to the real working set plus headroom. Independent of cpu_request_ratio because memory and CPU size differently."
+  type        = number
+  default     = 0.5
+  validation {
+    condition     = var.memory_request_ratio > 0 && var.memory_request_ratio <= 1
+    error_message = "memory_request_ratio must be in (0, 1]."
+  }
 }
 
 variable "health_check_path" {
@@ -153,19 +173,31 @@ variable "extra_volumes" {
 }
 
 variable "horizontal_pod_autoscaler" {
-  description = "The horizontal pod autoscaler for the deployment."
+  description = "Replica bounds for the HPA, plus scale stabilization windows. `scale_up_stabilization_seconds` defaults to 60: the HPA must see the load persist ~60s before adding a pod, which stops 2<->3 replica flapping (and the 502s each scale-down can cause). Set it to null to fall back to the Kubernetes default (0s = scale up on any momentary spike)."
   type = object({
-    min_replicas                  = number
-    max_replicas                  = number
-    cpu_utilization_percentage    = number
-    memory_utilization_percentage = number
+    min_replicas                     = number
+    max_replicas                     = number
+    scale_up_stabilization_seconds   = optional(number, 60)
+    scale_down_stabilization_seconds = optional(number, 300)
   })
   default = {
-    min_replicas                  = 1
-    max_replicas                  = 1
-    cpu_utilization_percentage    = 70
-    memory_utilization_percentage = 80
+    min_replicas = 1
+    max_replicas = 1
   }
+}
+
+variable "horizontal_pod_autoscaler_cpu_utilization_percentage" {
+  description = "Target average CPU utilization % for the HPA. The primary scaling signal."
+  type        = number
+  default     = 70
+  nullable    = false
+}
+
+variable "horizontal_pod_autoscaler_memory_utilization_percentage" {
+  description = "Target average MEMORY utilization % for the HPA. Set it HIGHER than the CPU target so CPU stays the primary scaler and memory acts as a safety net for memory pressure. IMPORTANT: size memory_request_ratio so normal usage sits comfortably below this target — because per-pod memory does not fall when replicas are added, a memory metric that is chronically over target ratchets the deployment to max_replicas and never scales back."
+  type        = number
+  default     = 80
+  nullable    = false
 }
 
 variable "prefer_non_control_plane" {

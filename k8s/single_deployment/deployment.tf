@@ -47,8 +47,8 @@ resource "kubernetes_deployment_v1" "deployment" {
                 memory = "${var.max_resources.memory}Mi"
               }
               requests = {
-                cpu    = "${floor(var.max_resources.cpu * 0.5)}m"
-                memory = "${floor(var.max_resources.memory * 0.5)}Mi"
+                cpu    = "${floor(var.max_resources.cpu * var.cpu_request_ratio)}m"
+                memory = "${floor(var.max_resources.memory * var.memory_request_ratio)}Mi"
               }
             }
           }

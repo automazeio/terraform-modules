@@ -29,11 +29,17 @@ module "kube-hetzner" {
   }
 
   traefik_version = "39.0.7"
-  traefik_additional_options = [
-    "--log.level=DEBUG"
-  ]
+  # No --log.level=DEBUG: prod runs at the chart default (INFO). The DEBUG flag
+  # here leaked verbose logs and surfaced as a duplicate --log.level arg.
+  traefik_additional_options = []
 
+  # Pin the system log to INFO (the --log.level=DEBUG above is dropped). Access
+  # log left OFF on purpose: Alloy doesn't ship the `traefik` namespace to Loki,
+  # so access lines would only reach pod stdout and never be queryable.
   traefik_merge_values = <<-EOT
+logs:
+  general:
+    level: INFO
 ports:
   mongodb:
     port: 27017

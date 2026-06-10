@@ -86,6 +86,15 @@ resource "helm_release" "traefik" {
           cpu    = "300m"
         }
       }
+      # Pin the system log to INFO to match the kube-hetzner Traefik (both
+      # configs kept identical). Access log left OFF on purpose: Alloy doesn't
+      # ship the `traefik` namespace to Loki, so access lines would only reach
+      # pod stdout and never be queryable for 502 attribution.
+      logs = {
+        general = {
+          level = "INFO"
+        }
+      }
     })
   ]
 }
