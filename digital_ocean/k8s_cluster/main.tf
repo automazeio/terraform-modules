@@ -17,7 +17,7 @@ resource "digitalocean_kubernetes_cluster" "main" {
   # re-resolves latest_version and upgrades the cluster on the spot (that
   # apply-time bump recycled every AU node at 22:19 AEST on 2026-05-26).
   # Minor-version bumps stay manual via doctl, in a low-traffic window.
-  auto_upgrade  = true
+  auto_upgrade  = var.auto_upgrade
   surge_upgrade = true
 
   maintenance_policy {

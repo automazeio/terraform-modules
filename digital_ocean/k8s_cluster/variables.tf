@@ -23,6 +23,12 @@ variable "node_size" {
   type        = string
 }
 
+variable "auto_upgrade" {
+  description = "Whether DO automatically applies new patch releases during the maintenance window"
+  type        = bool
+  default     = true
+}
+
 variable "maintenance_policy" {
   description = "Maintenance policy for the cluster"
   type = object({

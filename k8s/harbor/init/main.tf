@@ -105,7 +105,9 @@ locals {
 # deliberately generous 2Gi cap to avoid OOM during GC / large layer pushes.
 locals {
   harbor_resources = {
-    core        = { requests = { cpu = "50m", memory = "128Mi" }, limits = { memory = "256Mi" } }
+    # core hosts the /v2/ token service; a push + Trivy scan burst spiked it past
+    # 256Mi and OOMKilled it (exit 137), 503-ing docker logins. 512Mi gives headroom.
+    core        = { requests = { cpu = "50m", memory = "128Mi" }, limits = { memory = "512Mi" } }
     jobservice  = { requests = { cpu = "50m", memory = "128Mi" }, limits = { memory = "256Mi" } }
     portal      = { requests = { cpu = "10m", memory = "32Mi" }, limits = { memory = "64Mi" } }
     registry    = { requests = { cpu = "100m", memory = "512Mi" }, limits = { memory = "2Gi" } }
