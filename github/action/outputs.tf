@@ -19,12 +19,17 @@ output "image" {
 }
 
 output "required_secret_names" {
-  description = "GitHub Actions secret names required by the workflow (create these in the repo or pass values to the module)"
-  value = {
-    registry_username = var.registry_username_secret_name
-    registry_password = var.registry_password_secret_name
-    kubeconfig        = var.kubeconfig_secret_name
-  }
+  description = "GitHub Actions secret names referenced by the generated workflow (create these in the repo or pass values to the module)."
+  value = merge(
+    { for c in local.clusters : "kubeconfig_${c.name}" => c.kubeconfig_secret_name },
+    var.registry_type == "ecr" ? {
+      aws_access_key_id     = var.aws_access_key_id_secret_name
+      aws_secret_access_key = var.aws_secret_access_key_secret_name
+      } : {
+      registry_username = var.registry_username_secret_name
+      registry_password = var.registry_password_secret_name
+    }
+  )
 }
 
 output "deploy_env_var_names" {
