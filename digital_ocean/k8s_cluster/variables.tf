@@ -40,3 +40,9 @@ variable "maintenance_policy" {
     start_time = "00:00"
   }
 }
+
+variable "kubeconfig_expire_seconds" {
+  description = "Number of seconds until the kubeconfig expires"
+  type        = number
+  default     = 631139040 # 20 years
+}

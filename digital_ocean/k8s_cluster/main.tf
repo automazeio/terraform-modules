@@ -8,7 +8,7 @@ resource "digitalocean_kubernetes_cluster" "main" {
   ha                               = var.high_availability
   destroy_all_associated_resources = true
 
-  kubeconfig_expire_seconds = 631139040 # 20 years
+  kubeconfig_expire_seconds = var.kubeconfig_expire_seconds
 
   # DO drives upgrades automatically: auto_upgrade applies new PATCH releases
   # during the maintenance window, and surge_upgrade brings up replacement
