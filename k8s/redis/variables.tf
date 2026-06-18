@@ -23,6 +23,12 @@ variable "max_memory" {
   default     = 800
 }
 
+variable "maxmemory_policy" {
+  description = "Eviction policy applied when Redis reaches maxmemory (Redis --maxmemory-policy)."
+  type        = string
+  default     = "allkeys-lru"
+}
+
 variable "auth_enabled" {
   type    = bool
   default = false

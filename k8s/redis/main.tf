@@ -74,7 +74,7 @@ resource "helm_release" "redis" {
         }
         extraFlags = [
           "--maxmemory", "${floor(local.max_memory * 0.9)}mb",
-          "--maxmemory-policy", "allkeys-lru",
+          "--maxmemory-policy", var.maxmemory_policy,
         ]
       }
     })
