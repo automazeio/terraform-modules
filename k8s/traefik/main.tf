@@ -64,14 +64,27 @@ resource "helm_release" "traefik" {
   values = [
     yamlencode({
       ports = {
+        # web/websecure readTimeout is always set from var.traefik_read_timeout
+        # (default "60s"; RAISE it on entrypoints that accept large/slow uploads —
+        # it caps the WHOLE request incl. body).
         web = {
           proxyProtocol = {
             trustedIPs = ["127.0.0.1/32", "10.0.0.0/8"]
+          }
+          transport = {
+            respondingTimeouts = {
+              readTimeout = var.traefik_read_timeout
+            }
           }
         }
         websecure = {
           proxyProtocol = {
             trustedIPs = ["127.0.0.1/32", "10.0.0.0/8"]
+          }
+          transport = {
+            respondingTimeouts = {
+              readTimeout = var.traefik_read_timeout
+            }
           }
         }
       }

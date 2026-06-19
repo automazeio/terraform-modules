@@ -36,25 +36,46 @@ module "kube-hetzner" {
   # Pin the system log to INFO (the --log.level=DEBUG above is dropped). Access
   # log left OFF on purpose: Alloy doesn't ship the `traefik` namespace to Loki,
   # so access lines would only reach pod stdout and never be queryable.
-  traefik_merge_values = <<-EOT
-logs:
-  general:
-    level: INFO
-ports:
-  mongodb:
-    port: 27017
-    expose:
-      default: true
-    exposedPort: 27017
-    protocol: TCP
-    proxyProtocol:
-      trustedIPs:
-        - 127.0.0.1/32
-        - 10.0.0.0/8
-    transport:
-      respondingTimeouts:
-        readTimeout: 30m
-  EOT
+  # web/websecure readTimeout is always set from var.traefik_read_timeout (default
+  # "60s"; RAISE it on entrypoints that accept large/slow uploads — it caps the
+  # WHOLE request incl. body). The mongodb entrypoint keeps its own 30m timeout.
+  traefik_merge_values = yamlencode({
+    logs = {
+      general = {
+        level = "INFO"
+      }
+    }
+    ports = {
+      mongodb = {
+        port        = 27017
+        expose      = { default = true }
+        exposedPort = 27017
+        protocol    = "TCP"
+        proxyProtocol = {
+          trustedIPs = ["127.0.0.1/32", "10.0.0.0/8"]
+        }
+        transport = {
+          respondingTimeouts = {
+            readTimeout = "30m"
+          }
+        }
+      }
+      web = {
+        transport = {
+          respondingTimeouts = {
+            readTimeout = var.traefik_read_timeout
+          }
+        }
+      }
+      websecure = {
+        transport = {
+          respondingTimeouts = {
+            readTimeout = var.traefik_read_timeout
+          }
+        }
+      }
+    }
+  })
 
   cert_manager_version = "1.20.1"
 
