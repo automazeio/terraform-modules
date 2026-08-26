@@ -21,6 +21,7 @@ locals {
     aws_region                        = var.aws_region
     aws_access_key_id_secret_name     = var.aws_access_key_id_secret_name
     aws_secret_access_key_secret_name = var.aws_secret_access_key_secret_name
+    oidc_role_arn                     = var.oidc_role_arn
     dockerfile_path                   = var.dockerfile_path
     context                           = var.context
     deployment_names                  = var.deployment_names

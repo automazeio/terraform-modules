@@ -123,6 +123,12 @@ variable "aws_secret_access_key_secret_name" {
   default     = "AWS_SECRET_ACCESS_KEY"
 }
 
+variable "oidc_role_arn" {
+  description = "AWS IAM role ARN to assume via GitHub OIDC (registry_type = \"ecr\"). When set, the workflow uses OIDC (role-to-assume + id-token: write) instead of static access-key secrets."
+  type        = string
+  default     = null
+}
+
 variable "kubeconfig_secret_name" {
   description = "Name of the GitHub Actions secret containing the kubeconfig (e.g. TF_KUBECONFIG)"
   type        = string
