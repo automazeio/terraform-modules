@@ -19,6 +19,18 @@ resource "helm_release" "mongodb" {
 
   set = [
     {
+      name  = "image.repository"
+      value = "bitnamilegacy/mongodb"
+    },
+    {
+      name  = "image.tag"
+      value = var.image_tag
+    },
+    {
+      name  = "global.security.allowInsecureImages"
+      value = "true"
+    },
+    {
       name  = "architecture"
       value = "standalone"
     },

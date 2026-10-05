@@ -9,6 +9,11 @@ variable "persistence_size" {
   default     = "10Gi"
 }
 
+variable "image_tag" {
+  description = "Bitnami MongoDB image tag to pin"
+  type        = string
+}
+
 variable "persistence_storage_class" {
   description = "Storage class for MongoDB persistence"
   type        = string
