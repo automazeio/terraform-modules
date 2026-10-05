@@ -50,7 +50,7 @@ resource "helm_release" "redis" {
     ], !var.persistence_enabled ? [] : concat([
       {
         name  = "master.persistence.size"
-        value = "${ceil(local.max_memory * 1.5)}Mi"
+        value = var.storage_size != null ? var.storage_size : "${ceil(local.max_memory * 1.5)}Mi"
       },
       ], var.storage_class_name == null ? [] : [
       {

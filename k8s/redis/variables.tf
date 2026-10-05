@@ -11,6 +11,12 @@ variable "storage_class_name" {
   default     = null
 }
 
+variable "storage_size" {
+  description = "Override PVC size for Redis persistence (e.g. \"2Gi\"). Leave null to use the computed ceil(max_memory*1.5)Mi."
+  type        = string
+  default     = null
+}
+
 variable "persistence_enabled" {
   description = "Whether to enable persistence for Redis."
   type        = bool
