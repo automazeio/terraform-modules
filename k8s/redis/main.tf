@@ -5,7 +5,7 @@ resource "random_password" "redis_password" {
 }
 
 resource "helm_release" "redis" {
-  name       = "redis"
+  name       = var.release_name
   repository = "https://charts.bitnami.com/bitnami"
   chart      = "redis"
   version    = "25.4.1"
@@ -16,12 +16,12 @@ resource "helm_release" "redis" {
   atomic        = true
   wait          = true
   wait_for_jobs = true
-  timeout       = 120
+  timeout       = var.sentinel_enabled ? 600 : 120
 
   set = concat([
     {
       name  = "architecture"
-      value = "standalone"
+      value = var.sentinel_enabled ? "replication" : "standalone"
     },
     {
       name  = "image.repository"
@@ -50,7 +50,7 @@ resource "helm_release" "redis" {
     ], !var.persistence_enabled ? [] : concat([
       {
         name  = "master.persistence.size"
-        value = var.storage_size != null ? var.storage_size : "${ceil(local.max_memory * 1.5)}Mi"
+        value = local.storage_size
       },
       ], var.storage_class_name == null ? [] : [
       {
@@ -59,24 +59,76 @@ resource "helm_release" "redis" {
       },
   ]))
 
-  values = [
+  values = concat([
     yamlencode({
       master = {
-        resources = {
-          limits = {
-            cpu    = "${local.max_cpu}m"
-            memory = "${local.max_memory}Mi"
-          }
-          requests = {
-            cpu    = "${floor(local.max_cpu * 0.5)}m"
-            memory = "${local.max_memory}Mi"
-          }
-        }
-        extraFlags = [
-          "--maxmemory", "${floor(local.max_memory * 0.9)}mb",
-          "--maxmemory-policy", var.maxmemory_policy,
-        ]
+        resources  = local.redis_resources
+        extraFlags = local.redis_extra_flags
       }
     })
-  ]
+    ], !var.sentinel_enabled ? [] : [
+    # In replication + Sentinel mode the chart runs a single `<release>-node` StatefulSet
+    # configured from `replica.*`; `master.*` is ignored.
+    yamlencode({
+      replica = {
+        replicaCount                 = var.replica_count
+        podAntiAffinityPreset        = var.pod_anti_affinity_preset
+        automountServiceAccountToken = true
+        resources                    = local.redis_resources
+        extraFlags                   = local.redis_extra_flags
+        persistence = merge(
+          {
+            enabled = var.persistence_enabled
+            size    = local.storage_size
+          },
+          var.storage_class_name == null ? {} : { storageClass = var.storage_class_name },
+        )
+      }
+
+      sentinel = {
+        enabled = true
+        image = {
+          repository = "bitnamilegacy/redis-sentinel"
+          tag        = "8.2.1"
+        }
+        downAfterMilliseconds = var.sentinel_down_after_milliseconds
+
+        masterService = {
+          enabled = true
+        }
+        resources = {
+          requests = {
+            cpu    = "25m"
+            memory = "64Mi"
+          }
+          limits = {
+            memory = "128Mi"
+          }
+        }
+      }
+
+      kubectl = {
+        image = {
+          repository = "bitnamilegacy/kubectl"
+          tag        = "1.33.4"
+        }
+        resources = {
+          requests = {
+            cpu    = "10m"
+            memory = "32Mi"
+          }
+          limits = {
+            memory = "96Mi"
+          }
+        }
+      }
+
+      rbac = {
+        create = true
+      }
+      serviceAccount = {
+        create = true
+      }
+    })
+  ])
 }

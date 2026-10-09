@@ -19,24 +19,48 @@ resource "helm_release" "kube_prometheus_stack" {
       }
 
       prometheus = {
-        prometheusSpec = {
-          # Accept remote_write from Alloy agents in prod regions (EU/US/AU)
-          enableRemoteWriteReceiver = true
-          retention                 = "7d"
+        prometheusSpec = merge(
+          {
+            # Accept remote_write from Alloy agents in prod regions (EU/US/AU)
+            enableRemoteWriteReceiver = true
+            retention                 = var.retention
 
-          # Sized from live usage (~1.5Gi / 150m). Generous memory limit absorbs
-          # WAL-replay/query spikes and growth in active series from remote_write.
-          # No CPU limit on purpose: CPU throttling here causes scrape/query timeouts.
-          resources = {
-            requests = {
-              cpu    = "250m"
-              memory = "1536Mi"
+            # Sized from live usage (~1.5Gi / 150m). Generous memory limit absorbs
+            # WAL-replay/query spikes and growth in active series from remote_write.
+            # No CPU limit on purpose: CPU throttling here causes scrape/query timeouts.
+            resources = {
+              requests = {
+                cpu    = "250m"
+                memory = "1536Mi"
+              }
+              limits = {
+                memory = "3Gi"
+              }
             }
-            limits = {
-              memory = "3Gi"
+          },
+          var.retention_size == null ? {} : {
+            retentionSize = var.retention_size
+          },
+          var.storage_size == null ? {} : {
+            storageSpec = {
+              volumeClaimTemplate = {
+                spec = merge(
+                  {
+                    accessModes = ["ReadWriteOnce"]
+                    resources = {
+                      requests = {
+                        storage = var.storage_size
+                      }
+                    }
+                  },
+                  var.storage_class_name == null ? {} : {
+                    storageClassName = var.storage_class_name
+                  },
+                )
+              }
             }
-          }
-        }
+          },
+        )
       }
 
       alertmanager = {
