@@ -39,7 +39,7 @@ resource "helm_release" "alloy" {
 
               rule {
                 source_labels = ["__meta_kubernetes_pod_controller_kind"]
-                regex         = "ReplicaSet"
+                regex         = "${join("|", var.keep_controller_kinds)}"
                 action        = "keep"
               }
 

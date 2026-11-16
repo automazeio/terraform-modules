@@ -8,6 +8,17 @@ variable "watch_namespaces" {
   type        = list(string)
 }
 
+variable "keep_controller_kinds" {
+  description = "Pod controller kinds whose logs are kept (regex-joined with '|'). Default keeps only Deployment-owned pods (ReplicaSet); add \"Job\" to also keep Job-owned pods."
+  type        = list(string)
+  default     = ["ReplicaSet"]
+
+  validation {
+    condition     = length(var.keep_controller_kinds) > 0
+    error_message = "keep_controller_kinds must contain at least one controller kind."
+  }
+}
+
 variable "location_label" {
   description = "Location label (e.g., 'eu', 'us', 'au'). Omit to skip the external label."
   type        = string
