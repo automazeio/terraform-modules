@@ -28,13 +28,19 @@ variable "server_type" {
 }
 
 variable "autoscaler" {
-  description = "Cluster autoscaler config. The cartesian product of `locations` x `types` generates one pool per combination, all sharing the peak-workloads label/taint so the autoscaler treats them as interchangeable and falls over between them when Hetzner stocks out a server type in a location. Leave both lists empty to disable."
+  description = "Cluster autoscaler config. The cartesian product of `locations` x `types` generates one pool per combination, all sharing the peak-workloads label/taint so the autoscaler treats them as interchangeable and falls over between them when Hetzner stocks out a server type in a location. Leave both lists empty to disable. `min_nodes` servers of the first pool (first location, first type) stay running even with nothing scheduled, so peak workloads start without waiting for a server to boot; the other pools still scale from zero."
   type = object({
     locations = optional(list(string), [])
     types     = optional(list(string), [])
     max_nodes = optional(number, 3)
+    min_nodes = optional(number, 0)
   })
   default = {}
+
+  validation {
+    condition     = var.autoscaler.min_nodes >= 0 && var.autoscaler.min_nodes <= var.autoscaler.max_nodes
+    error_message = "autoscaler.min_nodes must be between 0 and autoscaler.max_nodes."
+  }
 }
 
 variable "high_availability" {

@@ -121,11 +121,11 @@ module "kube-hetzner" {
   ]
 
   autoscaler_nodepools = [
-    for pair in setproduct(var.autoscaler.locations, var.autoscaler.types) : {
+    for index, pair in setproduct(var.autoscaler.locations, var.autoscaler.types) : {
       name        = "autoscaled-${pair[1]}-${pair[0]}"
       server_type = pair[1]
       location    = pair[0]
-      min_nodes   = 0
+      min_nodes   = index == 0 ? var.autoscaler.min_nodes : 0
       max_nodes   = var.autoscaler.max_nodes
       swap_size   = "8G"
       labels = {
@@ -141,11 +141,15 @@ module "kube-hetzner" {
     }
   ]
 
-  cluster_autoscaler_extra_args = [
-    "--ignore-daemonsets-utilization=true",
-    "--max-nodes-total=${(var.high_availability ? 3 : 1) + (var.high_availability ? var.worker_count : 0) + var.autoscaler.max_nodes}",
-    "--expander=least-waste",
-  ]
+  cluster_autoscaler_extra_args = concat(
+    [
+      "--ignore-daemonsets-utilization=true",
+      "--max-nodes-total=${(var.high_availability ? 3 : 1) + (var.high_availability ? var.worker_count : 0) + var.autoscaler.max_nodes}",
+      "--expander=least-waste",
+    ],
+
+    var.autoscaler.min_nodes > 0 ? ["--enforce-node-group-min-size=true"] : [],
+  )
 
   ingress_replica_count = var.high_availability ? (3 + var.worker_count) : 1
 
